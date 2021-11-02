@@ -28,7 +28,19 @@ public class Machine {
 
     public void startMachine() {
         run = true;
-        checkIsNewDay();
+
+        boolean isNewDay = checkIsNewDay();
+        //if new day start, reset promotion
+        if (isNewDay) {
+            if (budgetPromotion < 50000) {
+                percentChange = 50;
+            }
+            else {
+                percentChange = 10;
+            }
+            budgetPromotion = 0;
+            productPromotion = null;
+        }
         insertMoney();
         while (run) {
             showProducts();
@@ -194,9 +206,9 @@ public class Machine {
                 }
             }
         }
+
         if (productPromotion != null) {
             int numberRandom = new Random().nextInt(10);
-
             if (budgetPromotion + productPromotion.getPrice() < 50000) {
                 if (percentChange == 10) {
                     //10% chance
@@ -215,13 +227,6 @@ public class Machine {
             }
         }
 
-        boolean isNewDay = checkIsNewDay();
-        if (isNewDay) {
-            if (budgetPromotion < 50000) {
-                percentChange = 50;
-            }
-            budgetPromotion = 0;
-        }
     }
 
     public boolean checkIsNewDay() {
