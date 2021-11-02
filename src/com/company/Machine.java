@@ -30,19 +30,19 @@ public class Machine {
         run = true;
 
         boolean isNewDay = checkIsNewDay();
-        //if new day start, reset promotion
-        if (isNewDay) {
-            if (budgetPromotion < 50000) {
-                percentChange = 50;
-            }
-            else {
-                percentChange = 10;
-            }
-            budgetPromotion = 0;
-            productPromotion = null;
-        }
         insertMoney();
         while (run) {
+            //if new day start, reset promotion
+            if (isNewDay) {
+                if (budgetPromotion < 50000) {
+                    percentChange = 50;
+                }
+                else {
+                    percentChange = 10;
+                }
+                budgetPromotion = 0;
+                productPromotion = null;
+            }
             showProducts();
             selectProduct();
             calculateChange();
@@ -85,6 +85,9 @@ public class Machine {
         System.out.println("* Nếu muốn nhập thêm tiền hãy nhập 4");
         switch (in.nextInt()) {
             case 0:
+                if (productsBought.size()!=0) {
+                    printBill();
+                }
                 stopMachine();
                 break;
             case 1:
