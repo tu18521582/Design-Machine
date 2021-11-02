@@ -34,7 +34,6 @@ public class Machine {
             showProducts();
             selectProduct();
             calculateChange();
-//            showQuestion();
         }
         printBill();
     }
@@ -55,7 +54,7 @@ public class Machine {
             System.out.println("Số tiền hiện tại của bạn là: " + remainingMoney);
         }
         else {
-            showMessageInputError();
+            Message.showMessageInputError();
             insertMoney();
         }
     }
@@ -92,7 +91,7 @@ public class Machine {
                 insertMoney();
                 break;
             default:
-                showMessageInputError();
+                Message.showMessageInputError();
                 selectProduct();
         }
     }
@@ -110,13 +109,13 @@ public class Machine {
                 showQuestion();
             }
             else if (remainingMoney < 0) {
-                System.out.println("Số tiền hiện tại của bạn không đủ, vui lòng nhập thêm để mua sản phẩm này.");
+                System.out.println("Rất tiếc, số tiền hiện tại của bạn không đủ, vui lòng nhập thêm để mua sản phẩm này.");
                 productsBought.remove(productsBought.size()-1);
                 remainingMoney = Math.abs(remainingMoney);
                 showQuestion();
             }
             else if(remainingMoney == 0) {
-                System.out.println("Bạn đã nhập đủ số tiền! Xin mời nhập thêm tiền để tiếp tục mua hàng");
+                System.out.println("Bạn đã nhập đủ số tiền để mua sản phẩm này! Nếu muốn mua thêm vui lòng nhập thêm tiền");
                 releaseSelectedProduct(productsBought.get(productsBought.size()-1));
                 showQuestion();
             }
@@ -154,8 +153,10 @@ public class Machine {
         System.out.println("************************************************************************");
         switch (in.nextInt()) {
             case 0:
-                System.out.println("Xin cảm ơn bạn đã mua sản phẩm của chúng tôi. Hẹn gặp lại");
-                printBill();
+                System.out.println("Xin cảm ơn bạn đã sử dụng dịch vụ của chúng tôi. Hẹn gặp lại");
+                if (productsBought.size()!=0) {
+                    printBill();
+                }
                 stopMachine();
                 return;
             case 1:
@@ -166,7 +167,7 @@ public class Machine {
                 }
                 break;
             default:
-                showMessageInputError();
+                Message.showMessageInputError();
                 showQuestion();
         }
     }
@@ -200,13 +201,15 @@ public class Machine {
                 if (percentChange == 10) {
                     //10% chance
                     if(numberRandom == 9) {
-                        showMessageCongratulate();
+                        Message.showMessageCongratulate(productPromotion);
+                        budgetPromotion = budgetPromotion + productPromotion.getPrice();
                     }
                 }
                 else {
                     //50% chance
                     if(numberRandom < 5) {
-                        showMessageCongratulate();
+                        Message.showMessageCongratulate(productPromotion);
+                        budgetPromotion = budgetPromotion + productPromotion.getPrice();
                     }
                 }
             }
@@ -221,15 +224,6 @@ public class Machine {
         }
     }
 
-    public void showMessageCongratulate() {
-        System.out.println("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
-        System.out.println("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
-        System.out.println("Chúc mừng bạn đã may mắn nhận được 1 sản phẩm " + productPromotion.getName() + " miễn phí!!!");
-        System.out.println("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
-        System.out.println("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
-        budgetPromotion = budgetPromotion + productPromotion.getPrice();
-    }
-
     public boolean checkIsNewDay() {
         SimpleDateFormat formatMinutes = new SimpleDateFormat("mm");
         String getMinutes = formatMinutes.format(new Date());
@@ -241,23 +235,5 @@ public class Machine {
             return true;
         }
         return false;
-    }
-
-    public void showMessageInputError() {
-        System.out.println("********************************************************");
-        System.out.println("** Bạn nhập thông tin không hợp lệ, vui lòng nhập lại **");
-        System.out.println("********************************************************");
-    }
-
-    public void cancelOrContinuePurchase() {
-        System.out.println("Nếu muốn nhập thêm tiền hãy nhấn 1, nếu muốn hủy bỏ hãy nhấn 0");
-        switch (in.nextInt()) {
-            case 0:
-                printBill();
-                stopMachine();
-                break;
-            case 1:
-                insertMoney();
-        }
     }
 }
