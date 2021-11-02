@@ -10,15 +10,13 @@ import java.util.stream.IntStream;
 public class Machine {
     private boolean run;
     private Product[] products;
-    private Money moneyInserted;
+    private Money moneyInserted = new Money(0);
     private ArrayList<Product> productsBought = new ArrayList<>();
     private int budgetPromotion = 0;
+    private Product productPromotion;
 
-    Product productPromotion;
-    int moneyAfterBuy;
+    int remainingMoney = 0;
     int percentChange = 10;
-    int purchaseQuantity = 0;
-
     Scanner in = new Scanner(System.in);
 
     public Machine() {
@@ -33,20 +31,18 @@ public class Machine {
         checkIsNewDay();
         insertMoney();
         while (run) {
-            purchaseQuantity++;
             showProducts();
             selectProduct();
             calculateChange();
-            showQuestion();
-            if (purchaseQuantity>=2) {
-                setUpPromotion();
-            }
+//            showQuestion();
         }
         printBill();
     }
 
     public void stopMachine() {
+        System.out.println("Tiền trả lại bạn là: " + remainingMoney);
         run = false;
+        System.exit(0);
     }
 
     public void insertMoney() {
@@ -54,12 +50,12 @@ public class Machine {
         int moneyInput = in.nextInt();
         if(checkMoneyValid(moneyInput)) {
             System.out.println("Bạn đã nhập số tiền là: " + moneyInput);
-            moneyInserted = new Money(moneyInput);
-            moneyAfterBuy = moneyInserted.getVal();
+            moneyInserted.setVal(remainingMoney + moneyInput);
+            remainingMoney = moneyInserted.getVal();
+            System.out.println("Số tiền hiện tại của bạn là: " + remainingMoney);
         }
         else {
-            System.out.println("Bạn nhập số tiền không hợp lệ, vui lòng nhập lại");
-            System.out.println("================================================");
+            showMessageInputError();
             insertMoney();
         }
     }
@@ -67,44 +63,71 @@ public class Machine {
     public void showProducts() {
         System.out.println("Danh sách sản phẩm: ");
         for (Product product: products) {
-            System.out.println(product.getName() + "----" + product.getPrice() + " vnd");
+            System.out.println(product.getId() +"         "+ product.getName() + "         " + product.getPrice() + " vnd");
         }
     }
 
     public void selectProduct() {
-        System.out.println("Mời bạn chọn sản phẩm.");
-        System.out.println("Nhập 1 để mua Coke, 2 để mua Pepsi, 3 để mua Soda");
+        System.out.println("------Mời bạn chọn sản phẩm------");
+        System.out.println("* Nếu muốn thoát hãy nhập 0");
+        System.out.println("* Nhập 1 để mua Coke, 2 để mua Pepsi, 3 để mua Soda");
+        System.out.println("* Nếu muốn nhập thêm tiền hãy nhập 4");
         switch (in.nextInt()) {
+            case 0:
+                stopMachine();
+                break;
             case 1:
                 productsBought.add(products[0]);
-                System.out.println("Bạn đã chọn mua " + productsBought.get(purchaseQuantity-1).getName());
+                System.out.println("Bạn đã chọn mua " + productsBought.get(productsBought.size()-1).getName());
                 break;
             case 2:
                 productsBought.add(products[1]);
-                System.out.println("Bạn đã chọn mua " + productsBought.get(purchaseQuantity-1).getName());
+                System.out.println("Bạn đã chọn mua " + productsBought.get(productsBought.size()-1).getName());
                 break;
             case 3:
                 productsBought.add(products[2]);
-                System.out.println("Bạn đã chọn mua " + productsBought.get(purchaseQuantity-1).getName());
+                System.out.println("Bạn đã chọn mua " + productsBought.get(productsBought.size()-1).getName());
+                break;
+            case 4:
+                insertMoney();
                 break;
             default:
-                System.out.println("Bạn nhập sai thông tin, vui lòng nhập lại");
+                showMessageInputError();
                 selectProduct();
         }
     }
 
     public void calculateChange() {
-        int change = moneyAfterBuy - productsBought.get(purchaseQuantity-1).getPrice();
-        moneyAfterBuy = change;
-        if (change < 0) {
-            System.out.println("Số tiền bạn nhập không đủ mua sản phẩm này, vui lòng nhập lại!");
+        //productsBought not empty
+        remainingMoney = productsBought.size() > 0
+                ? remainingMoney - productsBought.get(productsBought.size()-1).getPrice()
+                : moneyInserted.getVal();
+        int indexProductCurrent = productsBought.size();
+        if (indexProductCurrent != 0) {
+            if (remainingMoney > 0) {
+                System.out.println("Hiện tại tiền trong máy của bạn còn lại là: " + remainingMoney);
+                releaseSelectedProduct(productsBought.get(productsBought.size()-1));
+                showQuestion();
+            }
+            else if (remainingMoney < 0) {
+                System.out.println("Số tiền hiện tại của bạn không đủ, vui lòng nhập thêm để mua sản phẩm này.");
+                productsBought.remove(productsBought.size()-1);
+                remainingMoney = Math.abs(remainingMoney);
+                showQuestion();
+            }
+            else if(remainingMoney == 0) {
+                System.out.println("Bạn đã nhập đủ số tiền! Xin mời nhập thêm tiền để tiếp tục mua hàng");
+                releaseSelectedProduct(productsBought.get(productsBought.size()-1));
+                showQuestion();
+            }
         }
-        else if (change > 0) {
-            System.out.println("Tiền thừa lại của bạn là: " + change);
-        }
-        else if(change == 0) {
-            System.out.println("Bạn đã nhập đủ số tiền!");
-        }
+    }
+
+    public void releaseSelectedProduct(Product product) {
+        System.out.println("-------------------------------------------");
+        System.out.println("Xin mời bạn nhận sản phẩm " + product.getName());
+        System.out.println("------------------------------------------");
+        setUpPromotion();
     }
 
     public void printBill() {
@@ -126,62 +149,65 @@ public class Machine {
     }
 
     public void showQuestion() {
-        System.out.println("Bạn có muốn tiếp tục mua hàng không? Nếu có nhấn Y, nếu không nhấn N");
-        switch (in.next().charAt(0)) {
-            case 'Y':
-                System.out.println("Mời bạn tiếp tục mua hàng");
-                break;
-            case 'N':
+        System.out.println("************************************************************************");
+        System.out.println("**Bạn có muốn tiếp tục mua hàng không? Nếu có nhấn 1, nếu không nhấn 0**");
+        System.out.println("************************************************************************");
+        switch (in.nextInt()) {
+            case 0:
                 System.out.println("Xin cảm ơn bạn đã mua sản phẩm của chúng tôi. Hẹn gặp lại");
-                run = false;
+                printBill();
+                stopMachine();
                 return;
+            case 1:
+                System.out.println("Mời bạn tiếp tục mua hàng");
+                if(remainingMoney <= 0) {
+                    System.out.println("Số tiền hiện tại của bạn không đủ, vui lòng nhập thêm tiền");
+                    insertMoney();
+                }
+                break;
             default:
-                System.out.println("Nhập sai thông tin, vui lòng nhập lại");
+                showMessageInputError();
                 showQuestion();
         }
     }
 
     public void setUpPromotion() {
         int countCoke = 0, countPepsi = 0, countSoda = 0;
-        if (purchaseQuantity >= 3) {
-            for (int j = 0; j <= productsBought.size()-1; j++) {
-                 if (productsBought.get(j).getId() == 1) {
-                     countCoke++;
-                     if (countCoke == 3) {
-                         productPromotion = products[0];
-                     }
-                 }
-                 else if (productsBought.get(j).getId() == 2) {
-                     countPepsi++;
-                     if (countPepsi == 3) {
-                         productPromotion = products[1];
-                     }
-                 }
-                 else {
-                     countSoda++;
-                     if (countSoda == 3) {
-                         productPromotion = products[2];
-                     }
-                 }
-            }
-        }
-
-        if (productPromotion != null) {
-            int numberRandom = new Random().nextInt(10);
-            if (percentChange == 10) {
-                if(numberRandom == 9 && budgetPromotion + productPromotion.getPrice() < 50000) {
-                    System.out.println("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
-                    System.out.println("Chúc mừng bạn đã may mắn nhận được 1 sản phẩm miễn phí!!!");
-                    System.out.println("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
-                    budgetPromotion = budgetPromotion + productPromotion.getPrice();
+        if (productsBought.size() >= 3) {
+            for (int j = 0; j <= productsBought.size() - 1; j++) {
+                if (productsBought.get(j).getId() == 1) {
+                    countCoke++;
+                    if (countCoke == 3) {
+                        productPromotion = products[0];
+                    }
+                } else if (productsBought.get(j).getId() == 2) {
+                    countPepsi++;
+                    if (countPepsi == 3) {
+                        productPromotion = products[1];
+                    }
+                } else {
+                    countSoda++;
+                    if (countSoda == 3) {
+                        productPromotion = products[2];
+                    }
                 }
             }
-            else {
-                if(numberRandom < 5 && budgetPromotion + productPromotion.getPrice() < 50000) {
-                    System.out.println("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
-                    System.out.println("Chúc mừng bạn đã may mắn nhận được 1 sản phẩm miễn phí!!!");
-                    System.out.println("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
-                    budgetPromotion = budgetPromotion + productPromotion.getPrice();
+        }
+        if (productPromotion != null) {
+            int numberRandom = new Random().nextInt(10);
+
+            if (budgetPromotion + productPromotion.getPrice() < 50000) {
+                if (percentChange == 10) {
+                    //10% chance
+                    if(numberRandom == 9) {
+                        showMessageCongratulate();
+                    }
+                }
+                else {
+                    //50% chance
+                    if(numberRandom < 5) {
+                        showMessageCongratulate();
+                    }
                 }
             }
         }
@@ -195,6 +221,15 @@ public class Machine {
         }
     }
 
+    public void showMessageCongratulate() {
+        System.out.println("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+        System.out.println("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+        System.out.println("Chúc mừng bạn đã may mắn nhận được 1 sản phẩm " + productPromotion.getName() + " miễn phí!!!");
+        System.out.println("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+        System.out.println("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+        budgetPromotion = budgetPromotion + productPromotion.getPrice();
+    }
+
     public boolean checkIsNewDay() {
         SimpleDateFormat formatMinutes = new SimpleDateFormat("mm");
         String getMinutes = formatMinutes.format(new Date());
@@ -202,9 +237,27 @@ public class Machine {
         SimpleDateFormat formatHours = new SimpleDateFormat("HH");
         String getHours = formatHours.format(new Date());
 
-        if(getHours == "12" && getMinutes == "00") {
+        if(getHours == "00" && getMinutes == "00") {
             return true;
         }
         return false;
+    }
+
+    public void showMessageInputError() {
+        System.out.println("********************************************************");
+        System.out.println("** Bạn nhập thông tin không hợp lệ, vui lòng nhập lại **");
+        System.out.println("********************************************************");
+    }
+
+    public void cancelOrContinuePurchase() {
+        System.out.println("Nếu muốn nhập thêm tiền hãy nhấn 1, nếu muốn hủy bỏ hãy nhấn 0");
+        switch (in.nextInt()) {
+            case 0:
+                printBill();
+                stopMachine();
+                break;
+            case 1:
+                insertMoney();
+        }
     }
 }
